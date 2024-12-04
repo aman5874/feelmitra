@@ -1,0 +1,8 @@
+
+.env
+/build
+/node_modules
+/venv
+package-lock.json
+/scripts/__pycache__/
+.next/
