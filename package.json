@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build && pip install -r requirements.txt",
-    "start": "next start"
+    "frontend": "next dev",
+    "backend": "cd ./python-backend && uvicorn main:app --reload",
+    "dev": "concurrently --kill-others \"npm run frontend\" \"npm run backend\" -c \"blue.bold,green.bold\" -n \"FRONTEND,BACKEND\" -p \"[{name}]\" "
   },
   "dependencies": {
     "@studio-freight/lenis": "^1.0.42",
@@ -15,6 +15,7 @@
     "canvas-confetti": "^1.9.3",
     "chart": "^0.1.2",
     "chart.js": "^4.x.x",
+    "concurrently": "^9.1.0",
     "data-fns": "^1.1.0",
     "date-fns": "^4.1.0",
     "framer-motion": "^11.12.0",
