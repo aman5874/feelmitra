@@ -334,7 +334,7 @@ async def get_gemini_recommendations(analysis_result: dict, day_rating: str, sel
         emotion_scores = analysis_result.get("roberta_emotions", {}).get("top_5", {})
         emotional_stability = analysis_result.get("emotional_stability", {})
         
-        prompt = f"""You are an AI wellness coach. Based on the emotional data below, provide a detailed analysis and specific recommendations.
+        prompt = f"""You are an AI wellness coach. Based on the emotional data and journal content below, provide a personalized analysis and specific recommendations.
 Please follow the EXACT format specified, ensuring all sections are complete.
 
 EMOTIONAL DATA:
@@ -344,36 +344,46 @@ EMOTIONAL DATA:
 - Emotional Stability: {emotional_stability.get('stability_score', 0):.2f}
 - Sentiment: Positive {sentiment_dist.get('positive', 0):.2f} / Negative {sentiment_dist.get('negative', 0):.2f}
 
+JOURNAL CONTEXT:
+- User Journal Content: {analysis_result.get('user_journal', '')}
+- Emotion Transitions: {analysis_result.get('emotion_transitions', [])}
+- Morning Sentiment: {analysis_result.get('temporal_analysis', {}).get('morning_sentiment', 0):.2f}
+- Evening Sentiment: {analysis_result.get('temporal_analysis', {}).get('evening_sentiment', 0):.2f}
+- Sentiment Progression: {analysis_result.get('temporal_analysis', {}).get('sentiment_progression', [])}
+- Emotion Distribution Labels: {analysis_result.get('emotion_distribution', {}).get('labels', [])}
+- Emotion Distribution Values: {analysis_result.get('emotion_distribution', {}).get('values', [])}
+
 FORMAT YOUR RESPONSE EXACTLY AS FOLLOWS:
 
 EMOTIONAL INSIGHT:
-[Write 2-3 sentences analyzing the emotional patterns, their implications, and potential impact]
+[Analyze the emotional tone and key feelings expressed in the journal entry, noting any significant patterns]
+[Describe how the user's emotional state changed from morning to evening, highlighting notable shifts]
 
-ACTIVITIES:
-1. [Specific Activity Name] - [Exact Duration] - [Intensity Level] - [Scientific Benefit]
-2. [Specific Activity Name] - [Exact Duration] - [Intensity Level] - [Scientific Benefit]
-3. [Specific Activity Name] - [Exact Duration] - [Intensity Level] - [Scientific Benefit]
+PERSONALIZED ACTIVITIES:
+1. [Specific Activity Name] - [Exact Duration] - [Intensity Level] - [Scientific Benefit] - [How it addresses journal emotions]
+2. [Specific Activity Name] - [Exact Duration] - [Intensity Level] - [Scientific Benefit] - [How it addresses journal emotions]
+3. [Specific Activity Name] - [Exact Duration] - [Intensity Level] - [Scientific Benefit] - [How it addresses journal emotions]
 
 BOOKS/MEDIA:
-1. [Specific Title] - [Media Type] - [Evidence-based Reason for Recommendation]
-2. [Specific Title] - [Media Type] - [Evidence-based Reason for Recommendation]
-
+1. [Specific Title] - [Media Type] - [Evidence-based Reason] - [Relevance to journal themes]
+2. [Specific Title] - [Media Type] - [Evidence-based Reason] - [Relevance to journal themes]
 
 MOOD-BOOSTING FOODS:
-1. [Specific Food] - [Exact Calories] - [Key Nutrients] - [Research-backed Benefits]
-2. [Specific Food] - [Exact Calories] - [Key Nutrients] - [Research-backed Benefits]
-3. [Specific Food] - [Exact Calories] - [Key Nutrients] - [Research-backed Benefits]
+1. [Specific Food] - [Exact Calories] - [Key Nutrients] - [Research-backed Benefits] - [How it supports emotional state]
+2. [Specific Food] - [Exact Calories] - [Key Nutrients] - [Research-backed Benefits] - [How it supports emotional state]
+3. [Specific Food] - [Exact Calories] - [Key Nutrients] - [Research-backed Benefits] - [How it supports emotional state]
 
 SELF-CARE PRACTICES:
-1. [Specific Practice] - [Exact Duration] - [Clear Psychological Benefit]
-2. [Specific Practice] - [Exact Duration] - [Clear Psychological Benefit]
+1. [Specific Practice] - [Exact Duration] - [Clear Psychological Benefit] - [Connection to journal content]
+2. [Specific Practice] - [Exact Duration] - [Clear Psychological Benefit] - [Connection to journal content]
 
 Remember:
-1. Be specific and detailed in each recommendation
-2. Include ALL sections
-3. Follow the exact format with dashes between elements
+1. Analyze and reference the actual journal content in recommendations
+2. Consider emotional transitions throughout the day
+3. Make recommendations that specifically address identified emotional patterns
 4. Base recommendations on scientific research
-5. Ensure recommendations align with the emotional data"""
+5. Ensure all suggestions are personalized to the user's emotional state and experiences
+6. Include ALL sections with detailed, specific recommendations"""
 
         response = chat_session.send_message(prompt)
         
@@ -485,49 +495,72 @@ def get_fallback_recommendations(day_rating: str, moods: list) -> dict:
     # Customize fallback responses based on mood
     mood_based_activities = {
         "stressed": {
-            "activity": "Deep breathing exercises",
-            "duration": "10 minutes",
-            "intensity": "Low",
-            "benefit": "Activates parasympathetic nervous system"
+            "activity": "Personalized breathing exercises based on your journal content",
+            "duration": "10-15 minutes",
+            "intensity": "Adjusts based on stress level analysis",
+            "benefit": "Targets specific stressors mentioned in your entry"
         },
         "anxious": {
-            "activity": "Progressive muscle relaxation",
-            "duration": "15 minutes",
-            "intensity": "Low",
-            "benefit": "Reduces physical tension and anxiety"
+            "activity": "Guided relaxation focused on your expressed concerns",
+            "duration": "15-20 minutes", 
+            "intensity": "Adapted to anxiety intensity from sentiment",
+            "benefit": "Addresses anxiety triggers from your journal"
         },
-        # Add more mood-specific activities...
+        "sad": {
+            "activity": "Reflective journaling with positive prompts",
+            "duration": "15-20 minutes",
+            "intensity": "Based on emotional stability score",
+            "benefit": "Builds on positive elements found in your entry"
+        },
+        "angry": {
+            "activity": "Targeted physical activity",
+            "duration": "20-30 minutes",
+            "intensity": "Matched to emotional intensity metrics",
+            "benefit": "Channels frustrations identified in your writing"
+        },
+        "overwhelmed": {
+            "activity": "Structured mindfulness focused on your concerns",
+            "duration": "15-20 minutes",
+            "intensity": "Adapted to emotional variance score",
+            "benefit": "Addresses specific overwhelm factors mentioned"
+        },
+        "tired": {
+            "activity": "Rest routine based on energy patterns",
+            "duration": "20-30 minutes",
+            "intensity": "Aligned with fatigue indicators",
+            "benefit": "Targets energy depletion factors noted"
+        },
+        "happy": {
+            "activity": "Mood-amplifying creative expression",
+            "duration": "30-45 minutes",
+            "intensity": "Builds on positive sentiment score",
+            "benefit": "Reinforces positive themes from your entry"
+        },
+        "energetic": {
+            "activity": "Dynamic movement aligned with mood",
+            "duration": "25-35 minutes",
+            "intensity": "Matched to emotional energy level",
+            "benefit": "Harnesses positive energy patterns detected"
+        }
     }
 
     # Select appropriate activity based on moods
     primary_mood = moods[0].lower() if moods else "neutral"
     activity = mood_based_activities.get(primary_mood, {
         "activity": "Mindful walking",
-        "duration": "20 minutes",
+        "duration": "20 minutes", 
         "intensity": "Moderate",
-        "benefit": "Combines exercise with mindfulness"
+        "benefit": "Combines exercise with mindfulness",
+        "variable": True
     })
 
     return {
         "emotional_insight": f"Based on your {day_rating} day and {primary_mood} mood, focusing on gentle self-care may be beneficial.",
         "suggestions": {
             "activities": [activity],
-            "books_media": [{
-                "title": "Headspace App",
-                "type": "Meditation App",
-                "reason": "Structured mindfulness practices"
-            }],
-            "foods": [{
-                "food": "Dark chocolate",
-                "calories": "150 per 30g",
-                "nutrients": "Magnesium, Antioxidants",
-                "properties": "Boosts mood via endorphin release"
-            }],
-            "self_care": [{
-                "practice": "Mindful breathing",
-                "duration": "5 minutes",
-                "benefit": "Quick stress reduction"
-            }]
+            "books_media": [],
+            "foods": [],
+            "self_care": []
         }
     }
 
